@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referencial Curricular Computação - Tocantins</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome (para ícones via CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chosen Palette: Warm Neutrals & Education Blue -->
+    <!-- Application Structure Plan:
+        1. Dashboard Layout: Sidebar navigation for main sections (Visão Geral, Eixos, Conexão Matemática, Prática).
+        2. "Visão Geral": Introduces the document scope and the "Unplugged" concept using a key metrics dashboard.
+        3. "Os 3 Eixos": Interactive exploration of Pensamento Computacional, Mundo Digital, Cultura Digital. Uses a Chart.js Doughnut to filter content.
+        4. "Foco Matemática": A dedicated section for the user's specific goal. Features an interactive "De/Para" tool linking Math concepts to Computing skills.
+        5. "Implementação": A roadmap visualization using HTML/CSS (non-SVG) to guide the formation process.
+    -->
+    <!-- Visualization & Content Choices:
+        1. Context: Overview -> Goal: Show scope -> Viz: 3 Key Cards + Intro Text -> Interaction: None -> Clean HTML.
+        2. Context: Eixos -> Goal: Explain the 3 pillars -> Viz: Interactive Doughnut Chart -> Interaction: Click slice to update detail text -> Chart.js.
+        3. Context: Math Connection -> Goal: Practical examples -> Viz: Interactive Accordion/Cards -> Interaction: Filter by Math Topic -> JS DOM manipulation.
+        4. Context: Progression -> Goal: Show complexity growth -> Viz: Bar Chart (Skills by Grade) -> Interaction: Hover for details -> Chart.js.
+        5. Context: Computational Thinking -> Goal: Explain 4 pillars -> Viz: 2x2 Interactive Matrix -> Interaction: Hover/Click to reveal Math Analogies -> CSS Grid + JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Warm neutral light gray */
+            color: #1f2937;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .nav-item.active {
+            background-color: #e0f2fe; /* Light blue */
+            color: #0284c7; /* Darker blue */
+            border-right: 4px solid #0284c7;
+        }
+        .step-connector {
+            flex-grow: 1;
+            height: 2px;
+            background-color: #d1d5db;
+        }
+        .pillar-card {
+            transition: all 0.3s ease;
+        }
+        .pillar-card:hover {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-gray-100">
+            <h1 class="text-xl font-bold text-gray-800">BNCC Computação <span class="text-blue-600">Tocantins</span></h1>
+            <p class="text-xs text-gray-500 mt-1">Guia Interativo de Formação</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li>
+                    <button onclick="navigate('overview')" id="nav-overview" class="nav-item w-full text-left px-6 py-3 text-gray-600 hover:bg-gray-50 flex items-center transition-colors active">
+                        <i class="fas fa-home w-6"></i> Visão Geral
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('pillars')" id="nav-pillars" class="nav-item w-full text-left px-6 py-3 text-gray-600 hover:bg-gray-50 flex items-center transition-colors">
+                        <i class="fas fa-cubes w-6"></i> Os 3 Eixos
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('math-focus')" id="nav-math-focus" class="nav-item w-full text-left px-6 py-3 text-gray-600 hover:bg-gray-50 flex items-center transition-colors">
+                        <i class="fas fa-calculator w-6"></i> Foco Matemática
+                    </button>
+                </li>
+                <li>
+                    <button onclick="navigate('implementation')" id="nav-implementation" class="nav-item w-full text-left px-6 py-3 text-gray-600 hover:bg-gray-50 flex items-center transition-colors">
+                        <i class="fas fa-chalkboard-teacher w-6"></i> Prática Docente
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <div class="bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-1"></i> Foco na <strong>Computação Desplugada</strong>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed w-full bg-white z-50 border-b border-gray-200 p-4 flex justify-between items-center">
+        <h1 class="text-lg font-bold">BNCC Computação TO</h1>
+        <button onclick="toggleMobileMenu()" class="text-gray-600"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-gray-800 bg-opacity-75 z-40 hidden" onclick="toggleMobileMenu()">
+        <div class="bg-white w-64 h-full p-4 space-y-4">
+            <h2 class="font-bold text-xl mb-6">Menu</h2>
+            <button onclick="navigate('overview')" class="block w-full text-left p-2 hover:bg-gray-100 rounded">Visão Geral</button>
+            <button onclick="navigate('pillars')" class="block w-full text-left p-2 hover:bg-gray-100 rounded">Os 3 Eixos</button>
+            <button onclick="navigate('math-focus')" class="block w-full text-left p-2 hover:bg-gray-100 rounded">Foco Matemática</button>
+            <button onclick="navigate('implementation')" class="block w-full text-left p-2 hover:bg-gray-100 rounded">Prática Docente</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 mt-14 md:mt-0 bg-gray-50">
+        
+        <!-- SECTION: VISÃO GERAL -->
+        <section id="overview" class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Resumo Executivo do Documento</h2>
+                <p class="text-gray-600 leading-relaxed">
+                    O <strong>Referencial Curricular de Computação do Território do Tocantins</strong> é a normativa que traduz a BNCC Computação para a realidade estadual. 
+                    Ele estabelece que a computação deve ser ensinada como ciência fundamental na Educação Básica, estruturada em três eixos e promovendo a equidade através da 
+                    <strong>Computação Desplugada</strong> (ensino sem dependência de laboratórios).
+                </p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-700">Objetivo Central</h3>
+                        <div class="bg-blue-100 p-2 rounded-full text-blue-600"><i class="fas fa-bullseye"></i></div>
+                    </div>
+                    <p class="text-sm text-gray-500">Desenvolver o pensamento computacional como ferramenta de resolução de problemas, não apenas formação técnica.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-700">Abordagem</h3>
+                        <div class="bg-green-100 p-2 rounded-full text-green-600"><i class="fas fa-plug"></i></div>
+                    </div>
+                    <p class="text-sm text-gray-500">Ênfase na <strong>Computação Desplugada</strong>: uso de papel, jogos corporais e lógica para garantir acesso a todos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-700">Público-Alvo</h3>
+                        <div class="bg-purple-100 p-2 rounded-full text-purple-600"><i class="fas fa-users"></i></div>
+                    </div>
+                    <p class="text-sm text-gray-500">Da Educação Infantil ao Ensino Médio, integrado transversalmente (especialmente com Matemática).</p>
+                </div>
+            </div>
+
+            <!-- Timeline/Context Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Estrutura de Complexidade (Análise)</h3>
+                <p class="text-sm text-gray-500 mb-4">Distribuição estimada do foco cognitivo ao longo das etapas de ensino segundo o referencial.</p>
+                <div class="chart-container">
+                    <canvas id="progressionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: OS 3 EIXOS -->
+        <section id="pillars" class="hidden space-y-6">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Os Três Eixos Estruturantes</h2>
+                <p class="text-gray-600 mt-2">O currículo se divide em três áreas interconectadas. Clique no gráfico para explorar cada uma.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Interactive Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col items-center">
+                    <h3 class="font-semibold text-gray-700 mb-4">Distribuição dos Conceitos</h3>
+                    <div class="chart-container">
+                        <canvas id="pillarsChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-gray-400 mt-4">Clique nas fatias para ver detalhes</p>
+                </div>
+
+                <!-- Detail Panel -->
+                <div class="bg-white p-6 rounded-xl shadow-sm flex flex-col justify-center">
+                    <div id="pillar-detail-content" class="text-center lg:text-left">
+                        <div class="bg-blue-100 text-blue-800 inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4">Selecione um Eixo</div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-3" id="pillar-title">Explorando os Eixos</h3>
+                        <p class="text-gray-600 leading-relaxed mb-4" id="pillar-desc">
+                            A BNCC Computação não é sobre "usar Word ou Excel". É sobre entender como o mundo digital funciona (Mundo Digital), como sobreviver nele eticamente (Cultura Digital) e como resolver problemas usando a lógica das máquinas (Pensamento Computacional).
+                        </p>
+                        <ul class="text-left space-y-2 bg-gray-50 p-4 rounded-lg hidden" id="pillar-list">
+                            <!-- Dynamic list items -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deep Dive: Pensamento Computacional Matrix -->
+            <div class="mt-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">O Coração da Matemática: Pensamento Computacional</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="pillar-card border border-gray-200 rounded-lg p-4 cursor-pointer" onclick="highlightPC('decomp')">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded bg-red-100 text-red-600 flex items-center justify-center mr-3 font-bold">1</div>
+                            <h4 class="font-bold text-gray-800">Decomposição</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Quebrar problemas grandes em partes menores.</p>
+                    </div>
+                    <div class="pillar-card border border-gray-200 rounded-lg p-4 cursor-pointer" onclick="highlightPC('pattern')">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded bg-yellow-100 text-yellow-600 flex items-center justify-center mr-3 font-bold">2</div>
+                            <h4 class="font-bold text-gray-800">Reconhecimento de Padrões</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Identificar similaridades e repetições.</p>
+                    </div>
+                    <div class="pillar-card border border-gray-200 rounded-lg p-4 cursor-pointer" onclick="highlightPC('abstract')">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded bg-green-100 text-green-600 flex items-center justify-center mr-3 font-bold">3</div>
+                            <h4 class="font-bold text-gray-800">Abstração</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Focar no essencial, ignorar detalhes irrelevantes.</p>
+                    </div>
+                    <div class="pillar-card border border-gray-200 rounded-lg p-4 cursor-pointer" onclick="highlightPC('algo')">
+                        <div class="flex items-center mb-2">
+                            <div class="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center mr-3 font-bold">4</div>
+                            <h4 class="font-bold text-gray-800">Algoritmos</h4>
+                        </div>
+                        <p class="text-sm text-gray-600">Criar passos sequenciais para a solução.</p>
+                    </div>
+                </div>
+                <!-- Dynamic Feedback Box for Matrix -->
+                <div id="pc-feedback" class="mt-4 p-4 bg-indigo-50 text-indigo-900 rounded-lg border border-indigo-200 hidden">
+                    <strong class="block mb-1 font-bold" id="pc-feedback-title"></strong>
+                    <span id="pc-feedback-text"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: FOCO MATEMÁTICA -->
+        <section id="math-focus" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Conexão Matemática & Computação</h2>
+                <p class="text-gray-600">
+                    A Matemática é a base do Pensamento Computacional. Esta seção oferece ferramentas para você, professor, integrar os dois currículos sem precisar de computadores.
+                </p>
+            </div>
+
+            <!-- Interactive De/Para Tool -->
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="font-bold text-lg mb-4 text-gray-800">Tradutor de Currículo: Matemática -> Computação</h3>
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <label class="flex-1">
+                        <span class="text-sm font-semibold text-gray-600">Selecione um tópico de Matemática:</span>
+                        <select id="math-topic-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
+                            <option value="default">-- Escolha um tema --</option>
+                            <option value="geo">Geometria Plana</option>
+                            <option value="alg">Álgebra e Equações</option>
+                            <option value="stat">Estatística e Probabilidade</option>
+                            <option value="arith">Aritmética e Operações</option>
+                        </select>
+                    </label>
+                </div>
+
+                <!-- Dynamic Result Card -->
+                <div id="math-result" class="bg-gray-50 border border-gray-200 rounded-lg p-6 hidden transition-all">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 bg-yellow-100 p-3 rounded-full text-yellow-600">
+                            <i class="fas fa-lightbulb text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-lg font-bold text-gray-900" id="result-title">Título da Atividade</h4>
+                            <p class="mt-2 text-gray-600"><strong>Conceito Computacional:</strong> <span id="result-concept">...</span></p>
+                            <div class="mt-3 p-3 bg-white rounded border border-gray-200">
+                                <p class="text-sm font-semibold text-blue-600 mb-1">Sugestão de Atividade Desplugada:</p>
+                                <p class="text-sm text-gray-700" id="result-activity">...</p>
+                            </div>
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" id="result-skill">PC01</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- "O Pulo do Gato": Fluxogramas -->
+            <div class="bg-indigo-900 text-white p-6 rounded-xl shadow-lg">
+                <div class="flex flex-col md:flex-row items-center justify-between">
+                    <div class="mb-4 md:mb-0 md:mr-6">
+                        <h3 class="text-xl font-bold mb-2">A Ferramenta de Ouro: Fluxogramas</h3>
+                        <p class="text-indigo-200 text-sm">
+                            Substitua a "decoreba" de fórmulas pelo desenho do processo lógico.
+                            Ao pedir para o aluno desenhar o algoritmo de Bhaskara, ele entende a lógica de decisão (Se Delta < 0...).
+                        </p>
+                    </div>
+                    <button onclick="showFlowchartDemo()" class="bg-white text-indigo-900 px-4 py-2 rounded-lg font-bold hover:bg-indigo-50 transition-colors">
+                        Ver Exemplo Visual
+                    </button>
+                </div>
+                <!-- Hidden Flowchart representation (HTML/CSS) -->
+                <div id="flowchart-demo" class="mt-6 hidden bg-white text-gray-800 p-4 rounded-lg">
+                    <div class="flex flex-col items-center text-xs font-bold font-mono">
+                        <div class="border-2 border-black rounded-full px-3 py-1 bg-green-100">INÍCIO</div>
+                        <div class="h-4 w-0.5 bg-black"></div>
+                        <div class="border-2 border-black -skew-x-12 px-3 py-1 bg-blue-100">LER a, b, c</div>
+                        <div class="h-4 w-0.5 bg-black"></div>
+                        <div class="border-2 border-black px-3 py-1 bg-gray-100">Delta = b² - 4ac</div>
+                        <div class="h-4 w-0.5 bg-black"></div>
+                        <div class="border-2 border-black rotate-45 w-24 h-24 flex items-center justify-center bg-yellow-100 mb-4 relative">
+                            <span class="-rotate-45 text-center">Delta < 0?</span>
+                            <div class="absolute -right-8 top-10 text-red-600 -rotate-45">SIM</div>
+                            <div class="absolute bottom-[-20px] left-10 text-green-600 -rotate-45">NÃO</div>
+                        </div>
+                        <div class="flex w-full justify-center gap-16">
+                            <div class="flex flex-col items-center">
+                                <div class="h-4 w-0.5 bg-black"></div>
+                                <div class="border-2 border-black px-2 py-1 bg-white">Calc Raízes</div>
+                            </div>
+                            <div class="flex flex-col items-center -mt-20 ml-20">
+                                <div class="h-0.5 w-12 bg-black"></div>
+                                <div class="h-4 w-0.5 bg-black"></div>
+                                <div class="border-2 border-black -skew-x-12 px-2 py-1 bg-red-50">"Sem Raiz Real"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: IMPLEMENTAÇÃO -->
+        <section id="implementation" class="hidden space-y-6">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Roteiro de Implementação</h2>
+                <p class="text-gray-600">Passo a passo para inserir a BNCC Computação na rotina escolar.</p>
+            </div>
+
+            <div class="relative">
+                <!-- Step 1 -->
+                <div class="flex mb-8 items-start">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-lg">1</div>
+                        <div class="h-full w-0.5 bg-gray-200 mx-auto mt-2"></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex-1">
+                        <h4 class="font-bold text-gray-800 text-lg">Sensibilização & Desmistificação</h4>
+                        <p class="text-gray-600 text-sm mt-1">Mostrar aos professores que eles já utilizam algoritmos. Quebrar o medo da tecnologia focando na lógica.</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex mb-8 items-start">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-lg">2</div>
+                        <div class="h-full w-0.5 bg-gray-200 mx-auto mt-2"></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex-1">
+                        <h4 class="font-bold text-gray-800 text-lg">Formação: Foco no Pensamento Computacional</h4>
+                        <p class="text-gray-600 text-sm mt-1">Capacitar os professores de matemática nos 4 pilares (Decomposição, Padrões, Abstração, Algoritmos) usando exemplos matemáticos.</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex mb-8 items-start">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-lg">3</div>
+                        <div class="h-full w-0.5 bg-gray-200 mx-auto mt-2"></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex-1">
+                        <h4 class="font-bold text-gray-800 text-lg">Planejamento Integrado</h4>
+                        <p class="text-gray-600 text-sm mt-1">Solicitar planos de aula onde uma habilidade da BNCC Matemática é ensinada através de uma metodologia computacional (ex: fluxograma).</p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-green-500 text-white font-bold text-lg"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex-1">
+                        <h4 class="font-bold text-gray-800 text-lg">Aplicação em Sala</h4>
+                        <p class="text-gray-600 text-sm mt-1">Execução de atividades desplugadas e avaliação focada no processo (algoritmo) e não apenas na resposta final.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // State Management
+        let currentSection = 'overview';
+        let chartsInitialized = false;
+
+        // Data Store
+        const pillarsData = {
+            labels: ['Pensamento Computacional', 'Mundo Digital', 'Cultura Digital'],
+            data: [50, 25, 25], // Estimated emphasis for Math teachers
+            descriptions: [
+                "O pilar mais importante para a Matemática. Foca na resolução de problemas, lógica, criação de algoritmos e abstração. É 'como pensar para resolver'.",
+                "Compreensão dos artefatos digitais (Hardware, Software, Redes). Na matemática, conecta-se com sistemas numéricos (Binário) e lógica booleana.",
+                "Uso ético e crítico. Na matemática, entra fortemente em Estatística, Ciência de Dados, privacidade e interpretação de gráficos na mídia."
+            ],
+            details: [
+                ["Decomposição: Dividir para conquistar", "Reconhecimento de Padrões: Achar a regra", "Abstração: Limpar o ruído", "Algoritmos: Passo a passo"],
+                ["Hardware vs Software", "Internet e Redes", "Representação de Dados (Bits/Bytes)", "Inteligência Artificial (Conceito)"],
+                ["Segurança da Informação", "Lei Geral de Proteção de Dados (LGPD)", "Viés em Algoritmos", "Pegada Digital"]
+            ]
+        };
+
+        const mathActivities = {
+            geo: {
+                title: "Geometria Algorítmica",
+                concept: "Algoritmos e Decomposição",
+                activity: "Peça aos alunos para escreverem instruções para um colega desenhar um polígono complexo sem vê-lo. Isso ensina precisão, coordenadas e propriedades geométricas (ângulos externos).",
+                skill: "PC04 - Criar Algoritmos"
+            },
+            alg: {
+                title: "A Fórmula é um Algoritmo",
+                concept: "Abstração e Generalização",
+                activity: "Em vez de dar a fórmula da PA, dê a sequência e peça para criarem uma 'máquina' (fluxograma) que cospe o próximo número. A fórmula an = a1 + (n-1)r nasce daí.",
+                skill: "PC03 - Abstração"
+            },
+            stat: {
+                title: "Jornalismo de Dados",
+                concept: "Cultura Digital e Análise",
+                activity: "Analisar gráficos de notícias reais. Discutir se a escala do gráfico manipula a percepção (viés). Coletar dados da sala e criar um gráfico honesto vs. um tendencioso.",
+                skill: "CD02 - Letramento de Dados"
+            },
+            arith: {
+                title: "O Computador Humano",
+                concept: "Sistemas de Numeração",
+                activity: "Usar cartas com pontos (1, 2, 4, 8, 16) para ensinar binário. Mostra como o computador soma e guarda informações. Reforça potências de 2.",
+                skill: "MD01 - Representação de Dados"
+            }
+        };
+
+        const pcExplanations = {
+            decomp: {
+                title: "Decomposição na Matemática",
+                text: "Exemplo: Para calcular a área de uma figura em 'L', você a decompõe em dois retângulos simples. Na computação, dividimos um software complexo em funções menores."
+            },
+            pattern: {
+                title: "Padrões na Matemática",
+                text: "Exemplo: Identificar que (a+b)² é sempre a² + 2ab + b². Na computação, usamos padrões para criar loops (repetições) e economizar código."
+            },
+            abstract: {
+                title: "Abstração na Matemática",
+                text: "Exemplo: Transformar 'João comprou 3 maçãs...' em '3x'. Você abstraiu a fruta e focou no número. Na computação, criamos modelos simplificados da realidade."
+            },
+            algo: {
+                title: "Algoritmos na Matemática",
+                text: "Exemplo: O método da 'chave' para divisão. É uma receita rigorosa. Se você errar um passo, o resultado falha. Programar é escrever essas receitas."
+            }
+        };
+
+        // Navigation Logic
+        function navigate(sectionId) {
+            // Update UI State
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'border-r-4', 'border-blue-600'));
+            const activeBtn = document.getElementById(`nav-${sectionId}`);
+            if(activeBtn) {
+                activeBtn.classList.add('active');
+            }
+
+            // Close mobile menu if open
+            document.getElementById('mobile-menu').classList.add('hidden');
+
+            // Initialize Charts if entering sections for first time
+            if (sectionId === 'overview' && !chartsInitialized) {
+                initProgressionChart();
+                chartsInitialized = true;
+            }
+            if (sectionId === 'pillars') {
+                setTimeout(initPillarsChart, 100); // Slight delay to ensure visibility
+            }
+
+            currentSection = sectionId;
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Feature Logic: Math Focus
+        document.getElementById('math-topic-select').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const resultBox = document.getElementById('math-result');
+            
+            if (val === 'default') {
+                resultBox.classList.add('hidden');
+                return;
+            }
+
+            const data = mathActivities[val];
+            document.getElementById('result-title').innerText = data.title;
+            document.getElementById('result-concept').innerText = data.concept;
+            document.getElementById('result-activity').innerText = data.activity;
+            document.getElementById('result-skill').innerText = data.skill;
+            
+            resultBox.classList.remove('hidden');
+        });
+
+        function showFlowchartDemo() {
+            const demo = document.getElementById('flowchart-demo');
+            demo.classList.toggle('hidden');
+        }
+
+        // Feature Logic: PC Matrix
+        function highlightPC(key) {
+            const feedback = document.getElementById('pc-feedback');
+            const data = pcExplanations[key];
+            
+            document.getElementById('pc-feedback-title').innerText = data.title;
+            document.getElementById('pc-feedback-text').innerText = data.text;
+            
+            feedback.classList.remove('hidden');
+            feedback.classList.add('animate-pulse');
+            setTimeout(() => feedback.classList.remove('animate-pulse'), 500);
+        }
+
+        // Chart.js Implementations
+        function initProgressionChart() {
+            const ctx = document.getElementById('progressionChart').getContext('2d');
+            
+            // Check if chart instance exists
+            if(window.progressionChartInstance) return;
+
+            window.progressionChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Anos Iniciais', 'Anos Finais', 'Ensino Médio'],
+                    datasets: [
+                        {
+                            label: 'Abstração & Lógica (Foco Matemático)',
+                            data: [30, 60, 90],
+                            backgroundColor: '#3b82f6'
+                        },
+                        {
+                            label: 'Uso Instrumental (Técnico)',
+                            data: [70, 40, 50], // Starts high (learning to use mouse/tablet) then drops as focus shifts to logic
+                            backgroundColor: '#d1d5db'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '% Foco';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Intensidade Curricular (%)' } }
+                    }
+                }
+            });
+        }
+
+        function initPillarsChart() {
+            const ctx = document.getElementById('pillarsChart').getContext('2d');
+            
+            if(window.pillarsChartInstance) return;
+
+            window.pillarsChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: pillarsData.labels,
+                    datasets: [{
+                        data: pillarsData.data,
+                        backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6'],
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            updatePillarDetails(index);
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function updatePillarDetails(index) {
+            document.getElementById('pillar-title').innerText = pillarsData.labels[index];
+            document.getElementById('pillar-desc').innerText = pillarsData.descriptions[index];
+            
+            const list = document.getElementById('pillar-list');
+            list.innerHTML = '';
+            pillarsData.details[index].forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="fas fa-check text-green-500 mr-2"></i>${item}`;
+                li.className = "text-sm text-gray-700 py-1";
+                list.appendChild(li);
+            });
+            list.classList.remove('hidden');
+        }
+
+        // Initialize first chart on load
+        window.addEventListener('load', () => {
+            initProgressionChart();
+        });
+
+    </script>
+</body>
+</html>
